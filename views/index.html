@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="">
+	<title>Long Polling Chat</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+	<style>
+		html {
+			position: relative;
+			min-height: 98%;
+		}
+		body {
+			/* Margin bottom by footer height */
+			margin-bottom: 60px;
+		}
+		.footer {
+			position: absolute;
+			bottom: 0;
+			width: 100%;
+			/* Set the fixed height of the footer here */
+			height: 60px;
+			background-color: #f5f5f5;
+		}
+
+
+		/* Custom page CSS
+		-------------------------------------------------- */
+		/* Not required for template or sticky footer method. */
+
+		.container {
+			width: auto;
+			max-width: 680px;
+			padding: 15px;
+		}
+		.container .text-muted {
+			margin: 20px 0;
+		}
+		#text {
+			width:70%;padding-top: 10px;
+		}
+		.form-inline {
+			text-align: center;
+		}
+		#messages {
+			overflow-y: scroll;
+			height: 400px;
+		}
+		.right{
+			float: right;
+		}
+	</style>
+</head>
+
+<body>
+
+<!-- Begin page content -->
+<div class="container">
+	<div class="page-header">
+		<a href="/login" class="btn btn-default right">Войти</a><h1>Long Polling Chat</h1>
+	</div>
+	<ul id="messages"></ul>
+</div>
+
+<footer class="footer">
+	<div class="container">
+		<form class="form-inline" role="form" id="form">
+			<input type="text" class="form-control" name="text" id="text" placeholder="Введите текст сообщения">
+			<input type="submit" class="btn btn-primary" value="Отправить">
+		</form>
+	</div>
+</footer>
+
+<script>
+	form.onsubmit = function(){
+		var ajax = new XMLHttpRequest();
+		ajax.open('POST', "/send", true);
+		ajax.send(JSON.stringify({message:this.elements.text.value}));
+		this.elements.text.value = '';
+		return false;
+	};
+
+	getHistory();
+	getData();
+	scrollDown();
+
+	function getHistory() {
+		var ajax = new XMLHttpRequest();
+		ajax.open('GET', "/history", true);
+		ajax.onreadystatechange = function() {
+			if (this.readyState != 4) return;
+			var mess = JSON.parse(this.responseText);
+			var countMessages = mess.length;
+
+			for(var i=0;i<countMessages;i++) {
+				var li = document.createElement('li');
+				li.appendChild(document.createTextNode(mess[i].text));
+				messages.appendChild(li);
+			}
+		};
+		ajax.send(null);
+	}
+
+	function getData() {
+		var ajax = new XMLHttpRequest();
+		ajax.open('GET', "/get", true);
+		ajax.onreadystatechange = function() {
+			if (this.readyState != 4) return;
+			if (this.status != 200) {
+				setTimeout(getData, 500);
+				return;
+			}
+			var li = document.createElement('li');
+			li.appendChild(document.createTextNode(this.responseText));
+			messages.appendChild(li);
+			scrollDown();
+			getData();
+		};
+		ajax.send(null);
+	}
+
+	function scrollDown () {
+		window.setInterval(function() {
+			var elem = document.getElementById('messages');
+			elem.scrollTop = elem.scrollHeight;
+		}, 1000);
+	}
+</script>
+</body>
+</html>
